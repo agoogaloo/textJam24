@@ -1,7 +1,5 @@
 variables = ["w","x","y","z"]
 varValues = [0,0,0,0]
-values = ["0","1","3","5","7","10"]
-functions = ["assign(var,value)","increment(var,value)","decrement(var,value)", "for(repeats,function)", "doBoth(func,func)"]
 
 #stores types required by functions to execute line can have func, val
 typeStack = ["func"]
@@ -9,7 +7,9 @@ typeStack = ["func"]
 
 
 def play(players, lines):
+    import CodeBuilder
     program = " "
+
     currPlayer = 0
     while lines>0:
         inputLine = input()
@@ -68,11 +68,11 @@ def getArgs(symbol):
             return["val","func"]
         case "print":
             return["val"]
-        case "doBoth":
+        case "both":
             return ["func","func"]
-        case "increment":
+        case "incr":
             return["var","val"]
-        case "decrement":
+        case "decr":
             return["var","val"]
         case _:
             print("cant get args for symbol "+symbol)
@@ -82,6 +82,10 @@ def executeSymbol(name, args):
     match name:
         case "assign":
             assign(args[0], args[1])
+        case "incr":
+            add(args[0], args[1])
+        case "decr":
+            sub(args[0], args[1])
         case "for":
             for i in range(args[0]):
                 executeLine(args[1],"func")
