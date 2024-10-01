@@ -1,4 +1,6 @@
+import re
 import CodeBuilder
+from random import randint
 
 variables = ["i","x","y","z"]
 varValues = [0,0,0,0]
@@ -22,8 +24,9 @@ def play(_players, _lines):
     global availableSymbols
     global points
     players = _players
-    availableSymbols = [[]]*players
-    availableSymbols = [0]*players
+    for i in range(players):
+        availableSymbols.append(["rand"])
+    points= [0]*players
     print("symbol list:",availableSymbols)
     lines = _lines
     
@@ -36,7 +39,20 @@ def printGame():
     print("current program:\n"+program)
     print("player ",currPlayer," turn")
     print(lines,"lines left to write")
-    CodeBuilder.printOptions()
+    CodeBuilder.printOptions(availableSymbols[currPlayer])
+
+def drawNewSymbols(playnum = currPlayer):
+    symbolList = CodeBuilder.funcSubs[1::]+CodeBuilder.values[1::]+CodeBuilder.variables[1::]
+    print("symbolList:")
+    print(symbolList)
+    print("player",playnum,"getting new symbols")
+    for i in range(3):
+        randIdx = randint(0,len(symbolList)-1)
+        availableSymbols[playnum].append(symbolList[randIdx])
+    print(availableSymbols)
+
+
+
 
 def playLine( line):
     global program
@@ -50,6 +66,7 @@ def playLine( line):
     lines-=1
     currPlayer+=1
     currPlayer = currPlayer%players
+    drawNewSymbols(currPlayer)
     CodeBuilder.startTurn()
 
 
@@ -82,16 +99,18 @@ def executeSymbols(symbols, type ):
             executeSymbol(symbols[0], symbols[1:lastParam+1])
 
         case "val":
-            if symbols[0] in variables:
-                val = varValues[variables.index(symbols[0])]
-                print("returning",symbols[0],"=",val)
+            if symbols=="rand":
+                return randint(0,8)
+            if symbols in variables:
+                val = varValues[variables.index(symbols)]
+                print("returning",symbols,"=",val)
                 return val
-            print("(default) returning",int(symbols[0]))
-            return int(symbols[0])
+            print("(default) returning",int(symbols))
+            return int(symbols)
         case "var":
-            return symbols[0] 
+            return symbols 
         case _:
-            print(symbols[0]," with type ",type," not found")
+            print(symbols," with type ",type," not found")
 
 def getArgs(symbol):
     match symbol:
@@ -125,6 +144,7 @@ def executeSymbol(name, args):
             args[1] = executeSymbols(args[1], "val")
             sub(args[0], args[1])
         case "for":
+            args[0] = executeSymbols(args[0], "val")
             varValues[0] = int(args[0])
             while(varValues[0]>0):
                 executeSymbols(args[1::],"func")

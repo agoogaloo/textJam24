@@ -3,10 +3,11 @@ import pynput
 
 
 variables = ["i","x","y","z"]
-values = ["0","1","2","4","8"]
+values = ["0","1","2","4","8","rand"]
 functions = ["print(value)","assign(var,value)","increment(var,value)","decrement(var,value)", 
-             "for(repeats,function)", "doBoth(func,func)", "if(var, func)", "jump(value)"]
-funcSubs = ["print","assign","incr","decr","for","both", "if","jump"]
+             "for(repeats,function)", "doBoth(func,func)", "jump(value)","getSymbols(value)"]
+funcSubs = ["print","assign","incr","decr","for","both", "jump","symbol"]
+availableOptions=["print","x","i","assign"]
 
 
 
@@ -36,8 +37,8 @@ def addSymbol(idx):
         case"var":
             symbolList=variables
         case "val":
-            symbolList= (values+variables)
-    if(idx>=len(symbolList)):
+            symbolList= (variables+values)
+    if idx>=len(symbolList) or (availableOptions.count(symbolList[idx])==0 and idx!=0):
         return
     symbol = symbolList[idx]
 
@@ -67,25 +68,42 @@ def addSymbol(idx):
     print(line)
 
 
-def printOptions():
+def printOptions(_availableOptions):
+    global availableOptions
+    availableOptions =_availableOptions 
+
+    print(availableOptions)
     if(len(typeStack)==0):
         print("typestack is empty??")
         return
     options = []
+    subOpts= []
     print("  --==  AVAILABLE SYMBOLS  ==--")
     match typeStack[-1]:
         case "func":
             options = functions
+            subOpts = funcSubs
         case "var":
             options = variables
+            subOpts= variables
         case "val":
-            options = values+variables
+            options = variables+values
+            subOpts= variables+values
+    counts = [0]*len(options)
+    for opt in availableOptions:
+        if opt in subOpts:
+            counts[subOpts.index(opt)]+=1
 
+    print("[0]: (inf) ",options[0],"   ", end="")
+    optNum = 1
     for i in range(len(options)):
-        if i%3==2:
-            print("["+str(i)+"]:",options[i],"   ")
+        if counts[i]==0:
+            continue
+        optNum+=1
+        if optNum%3==2:
+            print("["+str(i)+"]: (x"+str(counts[i])+") ",options[i],"   ")
         else:
-            print("["+str(i)+"]:",options[i],"   ",end="")
+            print("["+str(i)+"]: (x"+str(counts[i])+") ",options[i],"   ", end="")
     print("")
 def on_press(key):
     try:
