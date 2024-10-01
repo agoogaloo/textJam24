@@ -1,31 +1,45 @@
 from pynput import keyboard
-from Game import getArgs
+import pynput
 
-variables = ["w","x","y","z"]
-values = ["0","1","3","5","7","10"]
-functions = ["assign(var,value)","increment(var,value)","decrement(var,value)", 
-             "for(repeats,function)", "doBoth(func,func)", "if(var, func)", "goto(value"]
-funcSubs = ["print","assign","incr","decr","for","both", "if","goto"]
+
+variables = ["i","x","y","z"]
+values = ["0","1","2","4","8"]
+functions = ["print(value)","assign(var,value)","increment(var,value)","decrement(var,value)", 
+             "for(repeats,function)", "doBoth(func,func)", "if(var, func)", "jump(value)"]
+funcSubs = ["print","assign","incr","decr","for","both", "if","jump"]
+
+
 
 typeStack = ["func"]
 paramStack = [1]
 line = ""
 
 print(typeStack)
+def startTurn():
+    global typeStack
+    global paramStack
+    global line
+    typeStack = ["func"]
+    paramStack = [1]
+    line = ""
+
 def addSymbol(idx):
+    from Game import getArgs, playLine, printGame
     if len(typeStack)==0:
         return
     global line
-    symbol =""
+    symbolList = []
     match typeStack[-1]:
         case "func":
-            symbol=funcSubs[idx]
+            symbolList=funcSubs
             
         case"var":
-            symbol=variables[idx]
+            symbolList=variables
         case "val":
-            symbol= (values+variables)[idx]
-
+            symbolList= (values+variables)
+    if(idx>=len(symbolList)):
+        return
+    symbol = symbolList[idx]
 
     
     args = getArgs(symbol)
@@ -43,17 +57,45 @@ def addSymbol(idx):
     paramStack[-1]-=1
     args.reverse()
     typeStack.extend(args)
+    if(len(typeStack)==0):
+        playLine(line)
 
+
+    printGame()
     print(typeStack)
     print(paramStack,len(paramStack))
     print(line)
 
 
+def printOptions():
+    if(len(typeStack)==0):
+        print("typestack is empty??")
+        return
+    options = []
+    print("  --==  AVAILABLE SYMBOLS  ==--")
+    match typeStack[-1]:
+        case "func":
+            options = functions
+        case "var":
+            options = variables
+        case "val":
+            options = values+variables
 
+    for i in range(len(options)):
+        if i%3==2:
+            print("["+str(i)+"]:",options[i],"   ")
+        else:
+            print("["+str(i)+"]:",options[i],"   ",end="")
+    print("")
 def on_press(key):
     try:
         if key.char.isdigit():
+            pass
             addSymbol(int(key.char))
+        if key==pynput.keyboard.Key.enter:
+            from Game import playLine
+            playLine(line)
+            
     except AttributeError:
         pass
 
