@@ -1,4 +1,3 @@
-import re
 import CodeBuilder
 from random import randint
 
@@ -25,28 +24,42 @@ def play(_players, _lines):
     global points
     players = _players
     for i in range(players):
-        availableSymbols.append(["rand"])
+        availableSymbols.append([])
+        drawNewSymbols(i,4+i)
     points= [0]*players
     print("symbol list:",availableSymbols)
     lines = _lines
     
+    CodeBuilder.startBuilder()
     printGame()
     while(lines>0):
         input()
 
+def printProgram():
+    print("     --== PROGRAM ==--")
+    lines = program.split("\n")
+    for i in range(len(lines)-1):
+        print(i+1,":",lines[i])
+    print("---------------------------")
 def printGame():
+    print("\n\n\n")
     
-    print("current program:\n"+program)
-    print("player ",currPlayer," turn")
-    print(lines,"lines left to write")
-    CodeBuilder.printOptions(availableSymbols[currPlayer])
+    printProgram()
 
-def drawNewSymbols(playnum = currPlayer):
+    print(" PLAYER "+str(currPlayer)+" TURN   ",end="")
+    print(lines,"lines left ")
+    print("     --==  SCORE  ==--")
+    for i in range(players):
+        print("Player"+str(i)+":",points[i],end="   ")
+    print("")
+    CodeBuilder.printOptions(availableSymbols[currPlayer],varValues)
+
+def drawNewSymbols(playnum = currPlayer, amount = 3):
     symbolList = CodeBuilder.funcSubs[1::]+CodeBuilder.values[1::]+CodeBuilder.variables[1::]
     print("symbolList:")
     print(symbolList)
     print("player",playnum,"getting new symbols")
-    for i in range(3):
+    for i in range(amount):
         randIdx = randint(0,len(symbolList)-1)
         availableSymbols[playnum].append(symbolList[randIdx])
     print(availableSymbols)
@@ -62,11 +75,11 @@ def playLine( line):
     global builderOptions
 
     executeLine(line)
+    drawNewSymbols(currPlayer)
     program +=line+"\n"
     lines-=1
     currPlayer+=1
     currPlayer = currPlayer%players
-    drawNewSymbols(currPlayer)
     CodeBuilder.startTurn()
 
 
@@ -151,6 +164,7 @@ def executeSymbol(name, args):
                 varValues[0]-=1;
         case "print":
             args[0] = executeSymbols(args[0], "val")
+            points[currPlayer]+=args[0]
             print(" ->",args[0])
         case "both":
             index = getParamLength(args)

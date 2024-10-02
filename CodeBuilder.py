@@ -63,32 +63,69 @@ def addSymbol(idx):
 
 
     printGame()
-    print(typeStack)
-    print(paramStack,len(paramStack))
     print(line)
 
 
-def printOptions(_availableOptions):
+def printSymbolList(optionList,varValues):
+    funcCounts = [0]*len(funcSubs)
+    varCounts =  [0]*len(variables)
+    valueCounts = [0]*len(values)
+    for opt in optionList:
+        if opt in funcSubs:
+            funcCounts[funcSubs.index(opt)]+=1
+        if opt in values:
+            valueCounts[values.index(opt)]+=1
+        if opt in variables:
+            varCounts[variables.index(opt)]+=1
+
+    print("     --==  Inventory  ==--")
+    print(" -Values:",end="")
+    print(values[0]+"(xINF)  ",end="")
+    for i in range(1,len(values)):
+        if valueCounts[i]!=0:
+            print(values[i]+"(x"+str(valueCounts[i])+")  ",end="")
+    print("")
+
+    print(" -Variables:",end="")
+    print(variables[0]+"="+str(varValues[0])+" (xINF)  ",end="")
+    for i in range(1,len(variables)):
+        if varCounts[i]!=0:
+            print(variables[i]+"="+str(varValues[i])+" (x"+str(varCounts[i])+")  ",end="")
+    print("")
+
+    print(" -Functions:",end="")
+    print(funcSubs[0]+"(xINF)  ",end="")
+    for i in range(1,len(funcSubs)):
+        if funcCounts[i]!=0:
+            print(funcSubs[i]+"(x"+str(funcCounts[i])+")  ",end="")
+    print("")
+
+
+
+def printOptions(_availableOptions,varValues):
     global availableOptions
     availableOptions =_availableOptions 
-
-    print(availableOptions)
     if(len(typeStack)==0):
         print("typestack is empty??")
         return
     options = []
     subOpts= []
-    print("  --==  AVAILABLE SYMBOLS  ==--")
+    printSymbolList(availableOptions,varValues)
+    print("     --==  AVAILABLE SYMBOLS  ==--")
     match typeStack[-1]:
         case "func":
             options = functions
             subOpts = funcSubs
         case "var":
-            options = variables
+            options = variables.copy()
             subOpts= variables
+            for i in range(len(variables)):
+                options[i]+= "="+str(varValues[i])
         case "val":
-            options = variables+values
+            options = variables.copy()+values
             subOpts= variables+values
+            for i in range(len(variables)):
+                options[i]+= "="+str(varValues[i])
     counts = [0]*len(options)
     for opt in availableOptions:
         if opt in subOpts:
@@ -105,6 +142,7 @@ def printOptions(_availableOptions):
         else:
             print("["+str(i)+"]: (x"+str(counts[i])+") ",options[i],"   ", end="")
     print("")
+
 def on_press(key):
     try:
         if key.char.isdigit():
@@ -117,6 +155,7 @@ def on_press(key):
     except AttributeError:
         pass
 
-listener = keyboard.Listener(on_press=on_press)
-listener.start()
+def startBuilder():
+    listener = keyboard.Listener(on_press=on_press)
+    listener.start()
 
