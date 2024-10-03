@@ -4,9 +4,9 @@ import pynput
 
 variables = ["i","x","y","z"]
 values = ["0","1","2","4","8","rand"]
-functions = ["print(value)","assign(var,value)","increment(var,value)","decrement(var,value)", 
-             "for(repeats,function)", "doBoth(func,func)", "jump(value)","getSymbols(value)"]
-funcSubs = ["print","assign","incr","decr","for","both", "jump","symbol"]
+functions = ["getSymbols(value)","removeSymbols(value)", "print(value)","increment(var,value)","divide(var,value)", 
+            "multiply(var,value)", "for(var,func)", "doBoth(func,func)"]
+funcSubs = ["addsbl","rmvsbl", "print","incr","div","mul","for","both" ]
 availableOptions=["print","x","i","assign"]
 
 
@@ -24,8 +24,50 @@ def startTurn():
     paramStack = [1]
     line = ""
 
+def onEnter(input):
+    from Game import playLine,printGame
+    if len(typeStack)==0:
+        playLine(line)
+        printGame()
+        
+        return
+
+
+    if input =="addsbl" or input == "getSymbols":
+        print("addsbl(val)")
+        print("takes a value and gives you that many new symbols for your next turn")
+    elif input =="rmvsbl" or input == "removeSymbols":
+        print("rmvsbl(val)")
+        print("takes a value and removes that many symbols from your opponents")
+        print("it removes <value> symbols total, not per player, and they get start the player next in the turn order")
+    elif input =="print" :
+        print("print(val)")
+        print("takes a value (either a varaible or direct number value) and gives you that many points")
+    elif input =="assign" :
+        print("assign(var,val)")
+        print("sets a variable to be the given value, or the value of another variable")
+    elif input =="incr" or input=="increment" :
+        print("incr(var,val)")
+        print("increases the value of a variable by the given amount")
+    elif input =="div" or input == "divide":
+        print("decr(var,val)")
+        print("integer divides the variable by an amount (rounds down to the nearest int)")
+        print("dividing by 0 sets the variable to -1")
+    elif input =="for":
+        print("for(var,func)")
+        print("executes func, and decrements var by 1 until var is less or equal to 0")
+    elif input =="both" or input=="doBoth":
+        print("both(func,func)")
+        print("executes both functions passed to it ")
+    elif input =="rand":
+        print("a random value from [0-8] inclusive")
+        
+    else:
+        print("use 0-9 to write your line of code.\nprint numbers to get points!\ntype a function name for a description")
+
+
 def addSymbol(idx):
-    from Game import getArgs, playLine, printGame
+    from Game import getArgs, printGame,useSymbol
     if len(typeStack)==0:
         return
     global line
@@ -41,6 +83,7 @@ def addSymbol(idx):
     if idx>=len(symbolList) or (availableOptions.count(symbolList[idx])==0 and idx!=0):
         return
     symbol = symbolList[idx]
+    useSymbol(symbol)
 
     
     args = getArgs(symbol)
@@ -58,12 +101,7 @@ def addSymbol(idx):
     paramStack[-1]-=1
     args.reverse()
     typeStack.extend(args)
-    if(len(typeStack)==0):
-        playLine(line)
-
-
     printGame()
-    print(line)
 
 
 def printSymbolList(optionList,varValues):
@@ -106,7 +144,8 @@ def printOptions(_availableOptions,varValues):
     global availableOptions
     availableOptions =_availableOptions 
     if(len(typeStack)==0):
-        print("typestack is empty??")
+        print(" -- Enter To Execute Line --")
+        print(" >",line)
         return
     options = []
     subOpts= []
@@ -131,17 +170,19 @@ def printOptions(_availableOptions,varValues):
         if opt in subOpts:
             counts[subOpts.index(opt)]+=1
 
-    print("[0]: (inf) ",options[0],"   ", end="")
+    print("(inf) [0]:",options[0],"   ", end="")
     optNum = 1
     for i in range(len(options)):
         if counts[i]==0:
             continue
         optNum+=1
         if optNum%3==2:
-            print("["+str(i)+"]: (x"+str(counts[i])+") ",options[i],"   ")
+            print("(x"+str(counts[i])+") ["+str(i)+"]:",options[i],"   ")
         else:
-            print("["+str(i)+"]: (x"+str(counts[i])+") ",options[i],"   ", end="")
-    print("")
+            print("(x"+str(counts[i])+") ["+str(i)+"]:",options[i],"   ", end="")
+    if optNum%3!=2:
+        print("")
+    print(" >",line)
 
 def on_press(key):
     try:

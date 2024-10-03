@@ -2,7 +2,7 @@ import CodeBuilder
 from random import randint
 
 variables = ["i","x","y","z"]
-varValues = [0,0,0,0]
+varValues = [0,1,2,4]
 
 #stores types required by functions to execute line can have func, val
 typeStack = ["func"]
@@ -24,7 +24,7 @@ def play(_players, _lines):
     global points
     players = _players
     for i in range(players):
-        availableSymbols.append([])
+        availableSymbols.append(["print","mul"])
         drawNewSymbols(i,4+i)
     points= [0]*players
     print("symbol list:",availableSymbols)
@@ -33,7 +33,7 @@ def play(_players, _lines):
     CodeBuilder.startBuilder()
     printGame()
     while(lines>0):
-        input()
+        CodeBuilder.onEnter(input())
 
 def printProgram():
     print("     --== PROGRAM ==--")
@@ -42,7 +42,7 @@ def printProgram():
         print(i+1,":",lines[i])
     print("---------------------------")
 def printGame():
-    print("\n\n\n")
+    print("\n\n\n\n\n\n")
     
     printProgram()
 
@@ -53,9 +53,11 @@ def printGame():
         print("Player"+str(i)+":",points[i],end="   ")
     print("")
     CodeBuilder.printOptions(availableSymbols[currPlayer],varValues)
+    print("\n")
 
 def drawNewSymbols(playnum = currPlayer, amount = 3):
-    symbolList = CodeBuilder.funcSubs[1::]+CodeBuilder.values[1::]+CodeBuilder.variables[1::]
+    symbolList = CodeBuilder.funcSubs[1::]+CodeBuilder.funcSubs[1::]+CodeBuilder.variables[1::]+CodeBuilder.values[1::]+CodeBuilder.variables[1::]
+    
     print("symbolList:")
     print(symbolList)
     print("player",playnum,"getting new symbols")
@@ -64,8 +66,11 @@ def drawNewSymbols(playnum = currPlayer, amount = 3):
         availableSymbols[playnum].append(symbolList[randIdx])
     print(availableSymbols)
 
-
-
+def useSymbol(name):
+    if availableSymbols[currPlayer].count(name)==0:
+        print(name,"not in",availableSymbols[currPlayer])
+        return
+    availableSymbols[currPlayer].remove(name)
 
 def playLine( line):
     global program
@@ -75,11 +80,11 @@ def playLine( line):
     global builderOptions
 
     executeLine(line)
-    drawNewSymbols(currPlayer)
     program +=line+"\n"
     lines-=1
     currPlayer+=1
     currPlayer = currPlayer%players
+    drawNewSymbols(currPlayer)
     CodeBuilder.startTurn()
 
 
@@ -130,16 +135,20 @@ def getArgs(symbol):
         case "assign":
             return["var", "val"]
         case "for":
-            return["val","func"]
+            return["var","func"]
         case "print":
             return["val"]
         case "both":
             return ["func","func"]
         case "incr":
             return["var","val"]
-        case "decr":
+        case "div":
             return["var","val"]
-        case "jump":
+        case "mul":
+            return["var","val"]
+        case "rmvsbl":
+            return["val"]
+        case "addsbl":
             return["val"]
         case _:
             # print("cant get args for symbol ",symbol)
@@ -153,15 +162,17 @@ def executeSymbol(name, args):
         case "incr":
             args[1] = executeSymbols(args[1], "val")
             add(args[0], args[1])
-        case "decr":
+        case "div":
             args[1] = executeSymbols(args[1], "val")
-            sub(args[0], args[1])
+            div(args[0], args[1])
+        case "mul":
+            args[1] = executeSymbols(args[1], "val")
+            mul(args[0], args[1])
         case "for":
-            args[0] = executeSymbols(args[0], "val")
-            varValues[0] = int(args[0])
-            while(varValues[0]>0):
+            index = variables.index(args[0])
+            while(varValues[index]>0):
                 executeSymbols(args[1::],"func")
-                varValues[0]-=1;
+                varValues[index]-=1;
         case "print":
             args[0] = executeSymbols(args[0], "val")
             points[currPlayer]+=args[0]
@@ -170,10 +181,37 @@ def executeSymbol(name, args):
             index = getParamLength(args)
             executeSymbols(args[0:index],"func")
             executeSymbols(args[index::],"func")
-        case "jump":
+        case "rmvsbl":
+            args[0] = executeSymbols(args[0], "val")
+            removeSymbol(args[0])
+            pass
+        case "addsbl":
+            args[0] = executeSymbols(args[0], "val")
+            drawNewSymbols(amount=args[0])
             pass
         case _:
             print("cant execute symbol "+name)
+
+def removeSymbol(times):
+    
+    victim = currPlayer
+    # cycling through all the players
+    for i in range(times):
+        victim+=1
+        if victim%players==currPlayer:
+            victim+=1
+        victim = victim%players
+        # removing a random symbol
+        options = len(availableSymbols[victim])
+        if options==0:
+            print("p",victim,"has no symbols to take")
+            return
+        index = randint(0,options-1)
+        print("index",index)
+        print("removing",availableSymbols[victim][index],"from p",victim)
+        availableSymbols[victim].pop(index)
+
+
 
 def add(x,y):
 
@@ -183,10 +221,20 @@ def add(x,y):
     print("inctementing",x,"by",y)
     varValues[variables.index(x)] += int(y)
     
-def sub(x,y):
+def div(x,y):
     if(not x in variables):
         return "x:",x," is not a settable variable"
-    varValues[variables.index(x)] -= int(y)
+    if y==0:
+        print("y=0, setting",x,"to -1")
+        varValues[variables.index(x)]   =-1
+        return
+
+    varValues[variables.index(x)] = int(varValues[variables.index(x)] / int(y))
+def mul(x,y):
+    if(not x in variables):
+        return "x:",x," is not a settable variable"
+
+    varValues[variables.index(x)] = int(varValues[variables.index(x)] * int(y))
 def assign(x,y):
     if(not x in variables):
         return "x:",x," is not a settable variable"
